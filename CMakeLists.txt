@@ -12,10 +12,10 @@ find_package(
 )
 
 
-# catkin_package(
+catkin_package(
 #   INCLUDE_DIRS include
 #   CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs common_msgs
-# )
+)
 
 include_directories(
     /home/neko/Code/dev_ws/devel/include
