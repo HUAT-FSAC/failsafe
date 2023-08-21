@@ -1,0 +1,9 @@
+<launch>
+
+  <arg name="keep_running" default="true"/>
+
+  <node pkg="failsafe" type="failsafe_node" name="failsafe">
+    <param name="keep_running" value="$(arg keep_running)"/> 
+  </node>
+
+</launch>

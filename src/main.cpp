@@ -2,6 +2,8 @@
 
 void init(ros::NodeHandle nh)
 {
+    nh.param("keep_running", keep_running, false);
+
     ros::Subscriber cam_sub =
         nh.subscribe("/pylon_camera_node/image_raw", 1, cam_callback);
     ros::Subscriber lidar_sub =
@@ -35,6 +37,12 @@ void alert(int type)
     // control_pub.publish();
 }
 
+void timeCallback(const ros::TimerEvent& event)
+{
+    ROS_INFO("AUTONOMUS Testing finished");
+    ros::shutdown();
+}
+
 void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &original_cloud_ptr)
 {
 }
@@ -62,11 +70,14 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "failsafe");
 
     ros::NodeHandle nh;
-    ros::Subscriber cam_sub;
-    ros::Subscriber lidar_sub;
-    ros::Subscriber imu_sub;
-    ros::Publisher control_pub;
 
     init(nh);
+
+    if (!keep_running) // running mode flag
+    {
+        ros::Timer timer = nh.createTimer(ros::Duration(10), timeCallback);
+    }
+    ros::Timer timer = nh.createTimer(ros::Duration(20), timeCallback);
+
     ros::spin();
 }
