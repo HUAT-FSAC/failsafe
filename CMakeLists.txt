@@ -24,7 +24,7 @@ include_directories(
 )
 
 add_executable(
-    failsafe src/main.cpp
+    failsafe_node src/main.cpp
 )
 
 target_link_libraries(
