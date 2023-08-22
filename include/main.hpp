@@ -23,15 +23,15 @@ enum FailureType {
 };
 
 // function define
-void init(ros::NsodeHandle nh);
+void init(ros::NodeHandle nh);
 
 void cam_callback(const sensor_msgs::Image::ConstPtr &msg);
 void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &original_cloud_ptr);
 void imu_callback(const common_msgs::HUAT_ASENSING::ConstPtr &msgs);
 
 void alert(int type);
-bool checkOnce();
-bool checkRuntime();
+void checkOnce();
+void checkRuntime();
 void hardwareCheck();
 
 // varibles

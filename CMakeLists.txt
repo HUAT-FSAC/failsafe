@@ -28,6 +28,6 @@ add_executable(
 )
 
 target_link_libraries(
-    failsafe
+    failsafe_node
     ${catkin_LIBRARIES}
 )

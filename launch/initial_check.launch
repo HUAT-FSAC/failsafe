@@ -4,7 +4,7 @@
 
   <node pkg="failsafe" type="failsafe_node" name="failsafe">
     <param name="keep_running" value="$(arg keep_running)"/> 
-    <rosparam command="load" file="$(find my_pkg)/config/config.yaml" />
+    <rosparam command="load" file="$(find failsafe)/config/config.yaml" />
   </node>
 
 </launch>
