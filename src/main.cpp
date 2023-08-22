@@ -1,14 +1,12 @@
 #include "main.hpp"
 
+#include <exception>
 #include <stdio.h>
-#include <string.h>
 
 #include <errno.h>   // Error integer and strerror() function
 #include <fcntl.h>   // Contains file controls like O_RDWR
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h>  // write(), read(), close()
-
-// TODO add entity button on racer's screen
 
 void init(ros::NodeHandle nh)
 {
@@ -44,7 +42,7 @@ void alert(int type)
     {
         ROS_INFO("No failure but alert was activated.");
     }
-    // control_pub.publish();
+    control_pub.publish(error_cmd);
 }
 
 void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &cloud_ptr)
@@ -64,27 +62,52 @@ void cam_callback(const sensor_msgs::Image::ConstPtr &msg)
     _image = msg;
 }
 
-bool hardwareCheck(){
+void contentCheck()
+{
+
+}
+
+void hardwareCheck(){
     // usb connection
     int serial_port = open("/dev/ttyUSB0", O_RDWR);
 
-    // Check for errors
     if (serial_port < 0) {
         // printf("Error %i from open: %s\n", errno, strerror(errno));
         alert(FAILURE_IMU);
-        return false;
     }
 
-    return true;
+    // ethnernet connection
+    try {
+        // camera
+        file.open("/sys/class/net//operstate");
+        file >> buffer;
+        if (buffer != "up") {
+            alert(FAILURE_CAM)
+        }
+        file.close();
+
+        // lidar
+        file.open("/sys/class/net//operstate");
+        file >> buffer;
+        if (buffer != "up") {
+            alert(FAILURE_LIDAR)
+        }
+        file.close();
+
+    } catch (const std::exception& e) {
+        ROS_WARNING("Error when opening file: " << e.what() << std::endl);
+    }
+
+    // icmp detection
+
 }
+
+// TODO make eth detect a function
 
 bool checkOnce()
 {
     ROS_INFO("Autonomous sensor checking initiated");
-    if (!hardwareCheck())
-    {
-        ROS_ERROR("Sensor checking falied!");
-    }
+    hardwareCheck();
     ros::shutdown();
 }
 
