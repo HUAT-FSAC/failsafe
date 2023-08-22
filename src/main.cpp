@@ -11,8 +11,7 @@
 
 void init(ros::NodeHandle nh)
 {
-    nh.param("keep_running", keep_running, false);
-
+    nh.param<bool>("keep_running", keep_running, false);
     nh.param<std::string>("camera_eth_interface", cam_eth, "noexist");
     nh.param<std::string>("lidar_eth_interface", lidar_eth, "noexist");
 
@@ -71,7 +70,8 @@ void contentCheck()
 
 }
 
-void hardwareCheck(){
+void hardwareCheck()
+{
     // usb connection
     int serial_port = open("/dev/ttyUSB0", O_RDWR);
 
@@ -103,7 +103,6 @@ void hardwareCheck(){
     }
 
     // icmp detection
-
 }
 
 // TODO make eth detect a function

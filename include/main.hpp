@@ -24,19 +24,21 @@ enum FailureType {
 
 // function define
 void init(ros::NsodeHandle nh);
+
 void cam_callback(const sensor_msgs::Image::ConstPtr &msg);
 void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &original_cloud_ptr);
 void imu_callback(const common_msgs::HUAT_ASENSING::ConstPtr &msgs);
+
 void alert(int type);
 bool checkOnce();
+bool checkRuntime();
+void hardwareCheck();
 
 // varibles
 ros::Subscriber cam_sub;
 ros::Subscriber lidar_sub;
 ros::Subscriber imu_sub;
 ros::Publisher control_pub;
-
-bool keep_running = false;
 
 sensor_msgs::PointCloud2 _cloud;
 common_msgs::HUAT_ASENSING _pos;
@@ -49,4 +51,5 @@ std::ifstream file;
 std::string buffer;
 std::string cam_eth;
 std::string lidar_eth;
+bool keep_running = false;
 #endif
