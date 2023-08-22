@@ -5,12 +5,16 @@
 
 #include <errno.h>   // Error integer and strerror() function
 #include <fcntl.h>   // Contains file controls like O_RDWR
+#include <string>
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h>  // write(), read(), close()
 
 void init(ros::NodeHandle nh)
 {
     nh.param("keep_running", keep_running, false);
+
+    nh.param<std::string>("camera_eth_interface", cam_eth, "noexist");
+    nh.param<std::string>("lidar_eth_interface", lidar_eth, "noexist");
 
     ros::Subscriber cam_sub =
         nh.subscribe("/pylon_camera_node/image_raw", 1, cam_callback);
@@ -79,7 +83,7 @@ void hardwareCheck(){
     // ethnernet connection
     try {
         // camera
-        file.open("/sys/class/net//operstate");
+        file.open("/sys/class/net/" + cam_eth + "/operstate");
         file >> buffer;
         if (buffer != "up") {
             alert(FAILURE_CAM)
@@ -87,7 +91,7 @@ void hardwareCheck(){
         file.close();
 
         // lidar
-        file.open("/sys/class/net//operstate");
+        file.open("/sys/class/net/" + lidar_eth  + "/operstate");
         file >> buffer;
         if (buffer != "up") {
             alert(FAILURE_LIDAR)

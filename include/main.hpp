@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <string.h>
+#include <string>
 // control msg
 
 // const defination
@@ -46,4 +47,6 @@ common_msgs::vehicle_cmd error_cmd;
 
 std::ifstream file;
 std::string buffer;
+std::string cam_eth;
+std::string lidar_eth;
 #endif
