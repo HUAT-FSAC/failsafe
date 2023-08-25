@@ -44,8 +44,7 @@ sensor_msgs::PointCloud2 _cloud;
 common_msgs::HUAT_ASENSING _pos;
 sensor_msgs::Image _image;
 
-common_msgs::vehicle_cmd error_cmd;
-// cmd.head1 = 
+common_msgs::vehicle_cmd cmd;
 
 std::ifstream file;
 std::string buffer;

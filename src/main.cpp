@@ -1,4 +1,5 @@
 #include "main.hpp"
+#include "common_msgs/vehicle_cmd.h"
 
 #include <exception>
 #include <stdio.h>
@@ -21,29 +22,43 @@ void init(ros::NodeHandle nh)
 
     control_pub =
         nh.advertise<common_msgs::vehicle_cmd>("/failsafe_control", 1);
+
+    // init predefined value for vehicle cmd
+    // values here are refered from pure_pursuit/PP_car
+    cmd.head1 = 0xAA;
+    cmd.head2 = 0x55;
+    cmd.length = 10;
+    cmd.steering = 0;
+    cmd.brake_force = 0;
+    cmd.pedal_ratio = 0;
+    cmd.gear_position = 0;
+    cmd.working_mode = 1;
+    cmd.racing_status = 3;    
+    cmd.racing_num = 3;
 }
 
 void alert(int type)
 {
-    if (type == FAILURE_CAM)
-    {
-        ROS_ERROR("Camera Failure");
-        // TODO disable camera related modules
-        // TODO send stop cmd
+    if (type == FAILURE_NO) {
+        cmd.racing_num = 0; // stands for no problem
+    } else {
+        if (type == FAILURE_CAM)
+        {
+            ROS_ERROR("Camera Failure");
+            // TODO disable camera related modules
+        } 
+        else if (type == FAILURE_IMU)
+        {
+            ROS_ERROR("IMU Failure");
+        }
+        else if (type == FAILURE_LIDAR)
+        {
+            ROS_ERROR("Lidar Failure");
+        }
+        cmd.racing_num = 3; // stands for a problem occured
     }
-    else if (type == FAILURE_IMU)
-    {
-        ROS_ERROR("IMU Failure");
-    }
-    else if (type == FAILURE_LIDAR)
-    {
-        ROS_ERROR("Lidar Failure");
-    }
-    else
-    {
-        ROS_WARN("No failure but alert was activated.");
-    }
-    control_pub.publish(error_cmd);
+    cmd.checksum = cmd.steering + cmd.brake_force + cmd.pedal_ratio + cmd.gear_position + cmd.working_mode + cmd.racing_num + cmd.racing_status;
+    control_pub.publish(cmd);
 }
 
 void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &cloud_ptr)
@@ -53,8 +68,8 @@ void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &cloud_ptr)
 
 void imu_callback(const common_msgs::HUAT_ASENSING::ConstPtr &msg)
 {
-    // if the msg is corrupted
-    // _pos = msg;
+    // TODO check if the msg is corrupted
+    _pos.ins_status = msg->ins_status;
 }
 
 // sensor_msgs/Image
@@ -98,13 +113,11 @@ void hardwareCheck()
     }
     catch (const std::exception &e)
     {
-        // ROS_WARNING(e.what().d);
+        ROS_ERROR_STREAM(e.what());
     }
 
     // icmp detection
 }
-
-// TODO make eth detect a function
 
 void checkOnce()
 {
@@ -134,6 +147,7 @@ int main(int argc, char **argv)
     else
     {
         checkRuntime();
+        // unavailable now
     }
 
     ros::spin();
