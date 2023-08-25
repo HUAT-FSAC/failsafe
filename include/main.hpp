@@ -5,13 +5,12 @@
 
 // spec msg include
 #include "common_msgs/HUAT_ASENSING.h"
-#include "common_msgs/vehicle_cmd.h"
 #include "sensor_msgs/Image.h"
 #include "sensor_msgs/PointCloud2.h"
-#include <fcntl.h>
+#include "common_msgs/vehicle_cmd.h"
+
+#include <fcntl.h> // Contains file controls like O_RDWR
 #include <fstream>
-#include <string.h>
-#include <string>
 // control msg
 
 // const defination
