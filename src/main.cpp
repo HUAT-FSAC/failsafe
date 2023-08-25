@@ -1,7 +1,10 @@
 #include "main.hpp"
+#include "ros/init.h"
+#include "ros/rate.h"
+#include <unistd.h>
 
 void init(ros::NodeHandle nh) {
-    nh.param<bool>("keep_running", keep_running, false);
+    nh.param<bool>("keep_running", keep_running, true);
     nh.param<std::string>("camera_eth_interface", cam_eth, "noexist");
     nh.param<std::string>("lidar_eth_interface", lidar_eth, "noexist");
 
@@ -22,13 +25,12 @@ void init(ros::NodeHandle nh) {
     cmd.pedal_ratio = 0;
     cmd.gear_position = 0;
     cmd.working_mode = 1;
-    cmd.racing_status = 3;
     cmd.racing_num = 1;
 }
 
 void alert(int type) {
     if (type == FAILURE_NO) {
-        cmd.racing_num = -1; // stands for no problem
+        cmd.racing_status = 1; // stands for no problem
     } else {
         if (type == FAILURE_CAM) {
             ROS_ERROR("Camera Failure");
@@ -38,7 +40,7 @@ void alert(int type) {
         } else if (type == FAILURE_LIDAR) {
             ROS_ERROR("Lidar Failure");
         }
-        cmd.racing_num = 3; // stands for a problem occured
+        cmd.racing_status = 3; // stands for a problem occured
     }
     cmd.checksum = cmd.steering + cmd.brake_force + cmd.pedal_ratio +
                    cmd.gear_position + cmd.working_mode + cmd.racing_num +
@@ -68,6 +70,7 @@ void hardwareCheck() {
 
     if (serial_port < 0) {
         alert(FAILURE_IMU);
+        _ok = false;
     }
 
     // ethnernet connection
@@ -77,6 +80,7 @@ void hardwareCheck() {
         file >> buffer;
         if (buffer != "up") {
             alert(FAILURE_CAM);
+            _ok = false;
         }
         file.close();
 
@@ -85,6 +89,7 @@ void hardwareCheck() {
         file >> buffer;
         if (buffer != "up") {
             alert(FAILURE_LIDAR);
+            _ok = false;
         }
         file.close();
     } catch (const std::exception &e) {
@@ -95,14 +100,30 @@ void hardwareCheck() {
 }
 
 void checkOnce() {
-    ROS_INFO("AS Sensor Check Monitor initiated");
+    ROS_INFO("AS Sensor Once Check initiated");
     hardwareCheck();
     ros::shutdown();
 }
 
 void checkRuntime() {
+    ros::Rate rate(2); // rate in herz
     ROS_INFO("AS Sensor Runtime Monitor initiated...");
-    // TODO init a new thread to run simultaneously
+
+    while (ros::ok()) {
+        hardwareCheck();
+
+        if (!runtime_init_flag) {
+            if (_ok) {
+                ROS_INFO("AS Sensor INITIAL Check Successed");
+                alert(FAILURE_NO); // vehicle initial check successed
+                runtime_init_flag = true;
+            } else {
+                ROS_INFO("AS Sensor INITIAL Check Failed");
+            }
+        }
+
+        rate.sleep();
+    }
     ros::shutdown();
 }
 
@@ -112,6 +133,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
     init(nh);
 
+    // TODO cannot retrive value from param label
     if (!keep_running) // running mode flag
     {
         checkOnce();

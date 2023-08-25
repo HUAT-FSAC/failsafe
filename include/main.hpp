@@ -50,4 +50,6 @@ std::string buffer;
 std::string cam_eth;
 std::string lidar_eth;
 bool keep_running = false;
+bool runtime_init_flag = false;
+bool _ok = true;
 #endif

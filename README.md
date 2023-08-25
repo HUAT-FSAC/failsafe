@@ -4,6 +4,18 @@
 
 实时检测各传感器的信息的发送情况，并在无响应/无效响应时控制车辆行为。
 
+## 启动
+
+由于现行的设计模式为：工控机接受来自 VCU 的 `common_msgs/vehicle_status/racing_num=2`（暂定为2） 的信号后，failsafe 开始启动。在确认各传感器物理连接后发送 `common_msgs/vehicle_cmd/racing_status=1` 来示意 VCU 车辆可以启动，若在运行时出现问题就发送 `common_msgs/vehicle_cmd/racing_status=3` 以启动紧急制动。
+
+因此在启动时应直接使用
+
+```bash
+roslaunch failsafe runtime_check.launch
+```
+
+直接启动运行时检测模式。
+
 ## 实现
 
 failsafe 的实现基于硬件连接检测和话题内容检测（软件）。
