@@ -5,9 +5,9 @@
 
 // spec msg include
 #include "common_msgs/HUAT_ASENSING.h"
+#include "common_msgs/vehicle_cmd.h"
 #include "sensor_msgs/Image.h"
 #include "sensor_msgs/PointCloud2.h"
-#include "common_msgs/vehicle_cmd.h"
 
 #include <fcntl.h> // Contains file controls like O_RDWR
 #include <fstream>
@@ -15,10 +15,10 @@
 
 // const defination
 enum FailureType {
-  FAILURE_NO = 0,
-  FAILURE_CAM = 1,
-  FAILURE_IMU = 2,
-  FAILURE_LIDAR = 3
+    FAILURE_NO = 0,
+    FAILURE_CAM = 1,
+    FAILURE_IMU = 2,
+    FAILURE_LIDAR = 3
 };
 
 // function define

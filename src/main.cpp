@@ -1,7 +1,6 @@
 #include "main.hpp"
 
-void init(ros::NodeHandle nh)
-{
+void init(ros::NodeHandle nh) {
     nh.param<bool>("keep_running", keep_running, false);
     nh.param<std::string>("camera_eth_interface", cam_eth, "noexist");
     nh.param<std::string>("lidar_eth_interface", lidar_eth, "noexist");
@@ -23,71 +22,60 @@ void init(ros::NodeHandle nh)
     cmd.pedal_ratio = 0;
     cmd.gear_position = 0;
     cmd.working_mode = 1;
-    cmd.racing_status = 3;    
+    cmd.racing_status = 3;
     cmd.racing_num = 3;
 }
 
-void alert(int type)
-{
+void alert(int type) {
     if (type == FAILURE_NO) {
         cmd.racing_num = 0; // stands for no problem
     } else {
-        if (type == FAILURE_CAM)
-        {
+        if (type == FAILURE_CAM) {
             ROS_ERROR("Camera Failure");
             // TODO disable camera related modules
-        } 
-        else if (type == FAILURE_IMU)
-        {
+        } else if (type == FAILURE_IMU) {
             ROS_ERROR("IMU Failure");
-        }
-        else if (type == FAILURE_LIDAR)
-        {
+        } else if (type == FAILURE_LIDAR) {
             ROS_ERROR("Lidar Failure");
         }
         cmd.racing_num = 3; // stands for a problem occured
     }
-    cmd.checksum = cmd.steering + cmd.brake_force + cmd.pedal_ratio + cmd.gear_position + cmd.working_mode + cmd.racing_num + cmd.racing_status;
+    cmd.checksum = cmd.steering + cmd.brake_force + cmd.pedal_ratio +
+                   cmd.gear_position + cmd.working_mode + cmd.racing_num +
+                   cmd.racing_status;
     control_pub.publish(cmd);
 }
 
-void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &cloud_ptr)
-{
+void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &cloud_ptr) {
     _cloud.data = cloud_ptr->data;
 }
 
-void imu_callback(const common_msgs::HUAT_ASENSING::ConstPtr &msg)
-{
+void imu_callback(const common_msgs::HUAT_ASENSING::ConstPtr &msg) {
     // TODO check if the msg is corrupted
     _pos.ins_status = msg->ins_status;
 }
 
 // sensor_msgs/Image
-void cam_callback(const sensor_msgs::Image::ConstPtr &msg)
-{
+void cam_callback(const sensor_msgs::Image::ConstPtr &msg) {
     _image.data = msg->data;
 }
 
 void contentCheck() {}
 
-void hardwareCheck()
-{
+void hardwareCheck() {
     // usb connection
     int serial_port = open("/dev/ttyUSB0", O_RDWR);
 
-    if (serial_port < 0)
-    {
+    if (serial_port < 0) {
         alert(FAILURE_IMU);
     }
 
     // ethnernet connection
-    try
-    {
+    try {
         // camera
         file.open("/sys/class/net/" + cam_eth + "/operstate");
         file >> buffer;
-        if (buffer != "up")
-        {
+        if (buffer != "up") {
             alert(FAILURE_CAM);
         }
         file.close();
@@ -95,36 +83,30 @@ void hardwareCheck()
         // lidar
         file.open("/sys/class/net/" + lidar_eth + "/operstate");
         file >> buffer;
-        if (buffer != "up")
-        {
+        if (buffer != "up") {
             alert(FAILURE_LIDAR);
         }
         file.close();
-    }
-    catch (const std::exception &e)
-    {
+    } catch (const std::exception &e) {
         ROS_ERROR_STREAM(e.what());
     }
 
     // icmp detection
 }
 
-void checkOnce()
-{
+void checkOnce() {
     ROS_INFO("AS Sensor Check Monitor initiated");
     hardwareCheck();
     ros::shutdown();
 }
 
-void checkRuntime()
-{
+void checkRuntime() {
     ROS_INFO("AS Sensor Runtime Monitor initiated...");
     // TODO init a new thread to run simultaneously
     ros::shutdown();
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     ros::init(argc, argv, "failsafe");
 
     ros::NodeHandle nh;
@@ -133,9 +115,7 @@ int main(int argc, char **argv)
     if (!keep_running) // running mode flag
     {
         checkOnce();
-    }
-    else
-    {
+    } else {
         checkRuntime();
         // unavailable now
     }
