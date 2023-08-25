@@ -23,12 +23,12 @@ void init(ros::NodeHandle nh) {
     cmd.gear_position = 0;
     cmd.working_mode = 1;
     cmd.racing_status = 3;
-    cmd.racing_num = 3;
+    cmd.racing_num = 1;
 }
 
 void alert(int type) {
     if (type == FAILURE_NO) {
-        cmd.racing_num = 0; // stands for no problem
+        cmd.racing_num = -1; // stands for no problem
     } else {
         if (type == FAILURE_CAM) {
             ROS_ERROR("Camera Failure");
