@@ -1,12 +1,18 @@
 #include "main.hpp"
 #include "ros/init.h"
+#include "ros/param.h"
 #include "ros/rate.h"
 #include <unistd.h>
 
 void init(ros::NodeHandle nh) {
-    nh.param<bool>("keep_running", keep_running, true);
-    nh.param<std::string>("camera_eth_interface", cam_eth, "noexist");
-    nh.param<std::string>("lidar_eth_interface", lidar_eth, "noexist");
+
+    
+    // ROS_WARN_STREAM(nh.param("keep_running", keep_running, true));
+
+    ros::param::get("keep_running", keep_running);
+    ROS_WARN_STREAM(keep_running);
+    ros::param::get("camera_eth_interface", cam_eth);
+    ros::param::get("lidar_eth_interface", lidar_eth);
 
     cam_sub = nh.subscribe("/pylon_camera_node/image_raw", 1, cam_callback);
     lidar_sub = nh.subscribe("/velodyne_points", 2, lidar_callback);

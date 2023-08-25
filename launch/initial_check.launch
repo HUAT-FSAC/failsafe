@@ -1,10 +1,8 @@
 <launch>
+  <param name="keep_running" value="false" />
 
-  <arg name="keep_running" default="false"/>
-
-  <node pkg="failsafe" type="failsafe_node" name="failsafe">
-    <param name="keep_running" value="$(arg keep_running)"/> 
-    <rosparam command="load" file="$(find failsafe)/config/config.yaml" />
+  <node pkg="failsafe" type="failsafe_node" name="failsafe" output="screen">
+    <rosparam command="load" file="$(find failsafe)/config/config.yml" />
   </node>
 
 </launch>
