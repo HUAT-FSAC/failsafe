@@ -1,14 +1,9 @@
 #include "main.hpp"
 
 void init(ros::NodeHandle nh) {
-
-    
-    // ROS_WARN_STREAM(nh.param("keep_running", keep_running, true));
-
     ros::param::get("keep_running", keep_running);
-    ROS_WARN_STREAM(keep_running);
-    ros::param::get("camera_eth_interface", cam_eth);
-    ros::param::get("lidar_eth_interface", lidar_eth);
+    ros::param::get("/failsafe/camera_eth_interface", cam_eth);
+    ros::param::get("/failsafe/lidar_eth_interface", lidar_eth);
 
     cam_sub = nh.subscribe("/pylon_camera_node/image_raw", 1, cam_callback);
     lidar_sub = nh.subscribe("/velodyne_points", 2, lidar_callback);
@@ -34,20 +29,20 @@ void alert(int type) {
     if (type == FAILURE_NO) {
         cmd.racing_status = 1; // stands for no problem
     } else {
-        if (type == FAILURE_CAM) {
-            ROS_ERROR("Camera Failure");
-            // TODO disable camera related modules
-        } else if (type == FAILURE_IMU) {
-            ROS_ERROR("IMU Failure");
-        } else if (type == FAILURE_LIDAR) {
-            ROS_ERROR("Lidar Failure");
-        }
         cmd.racing_status = 3; // stands for a problem occured
+        _ok = false;
     }
     cmd.checksum = cmd.steering + cmd.brake_force + cmd.pedal_ratio +
                    cmd.gear_position + cmd.working_mode + cmd.racing_num +
                    cmd.racing_status;
-    control_pub.publish(cmd);
+    
+    if (type == FAILURE_NO || runtime_init_flag) {
+        ROS_DEBUG_STREAM("cmd sent, racing_status: " + std::to_string(cmd.racing_status));
+        control_pub.publish(cmd);
+    } else {
+        ROS_DEBUG("Out of some reason, cmd was not sent.");
+        ROS_DEBUG_STREAM("type: " + std::to_string(type) + "\truntimeflag: " + std::to_string(runtime_init_flag));
+    }
 }
 
 void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &cloud_ptr) {
@@ -67,31 +62,40 @@ void cam_callback(const sensor_msgs::Image::ConstPtr &msg) {
 void contentCheck() {}
 
 void hardwareCheck() {
+    _ok = true;
     // usb connection
     int serial_port = open("/dev/ttyUSB0", O_RDWR);
 
     if (serial_port < 0) {
+        ROS_ERROR("IMU Failure");
         alert(FAILURE_IMU);
-        _ok = false;
-    }
+    } else {
+            ROS_DEBUG("IMU Connected");
+        }
 
     // ethnernet connection
     try {
-        // camera
-        file.open("/sys/class/net/" + cam_eth + "/operstate");
+        // lidar
+        file.open("/sys/class/net/" + lidar_eth + "/operstate");
+        ROS_INFO_STREAM("lidar: " + lidar_eth);
         file >> buffer;
         if (buffer != "up") {
-            alert(FAILURE_CAM);
-            _ok = false;
+            ROS_ERROR("Lidar Failure");
+            alert(FAILURE_LIDAR);
+        } else {
+            ROS_DEBUG("Lidar Connected");
         }
         file.close();
 
-        // lidar
-        file.open("/sys/class/net/" + lidar_eth + "/operstate");
+        // camera
+        file.open("/sys/class/net/" + cam_eth + "/operstate");
+        ROS_INFO_STREAM("cam: " + cam_eth);
         file >> buffer;
         if (buffer != "up") {
-            alert(FAILURE_LIDAR);
-            _ok = false;
+            ROS_ERROR("Camera Failure");
+            alert(FAILURE_CAM);
+        }else {
+            ROS_DEBUG("Camera Connected");
         }
         file.close();
     } catch (const std::exception &e) {
@@ -109,23 +113,33 @@ void checkOnce() {
 
 void checkRuntime() {
     ros::Rate rate(2); // rate in herz
-    ROS_INFO("AS Sensor Runtime Monitor initiated...");
+    ROS_INFO("AS Sensor Runtime Monitor started");
 
     while (ros::ok()) {
+        ROS_DEBUG("Checking begin..");
         hardwareCheck();
 
+        // runtime initial check 
         if (!runtime_init_flag) {
             if (_ok) {
-                ROS_INFO("AS Sensor INITIAL Check Successed");
-                alert(FAILURE_NO); // vehicle initial check successed
-                runtime_init_flag = true;
+                if (_num < 8) {
+                    alert(FAILURE_NO); // vehicle initial check successed
+                    _num++;
+                } else {
+                    runtime_init_flag = true;
+                    ROS_INFO("AS Sensor INITIAL Check Successed");
+                    alert(FAILURE_NO); // last time sent
+                }
             } else {
-                ROS_INFO("AS Sensor INITIAL Check Failed");
+                ROS_INFO("Initial Check Failed, resetting internal check counter...");
+                _num = 0;
             }
         }
 
         rate.sleep();
     }
+
+    ROS_WARN("Failsafe has reached its end, stopping now");
     ros::shutdown();
 }
 

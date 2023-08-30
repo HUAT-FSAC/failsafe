@@ -49,8 +49,10 @@ std::ifstream file;
 std::string buffer;
 std::string cam_eth;
 std::string lidar_eth;
-bool keep_running;
 
+int _num = 0;
+
+bool keep_running;
 bool runtime_init_flag = false;
 bool _ok = true;
 #endif
