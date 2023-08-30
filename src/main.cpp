@@ -6,6 +6,7 @@ void init(ros::NodeHandle nh) {
     ros::param::get("/failsafe/camera_eth_interface", cam_eth);
     ros::param::get("/failsafe/lidar_eth_interface", lidar_eth);
     ros::param::get("/failsafe/accept_only", accept_only);
+    ros::param::get("/failsafe/false_sensor", false_sensor);
 
     cam_sub = nh.subscribe("/pylon_camera_node/image_raw", 1, cam_callback);
     lidar_sub = nh.subscribe("/velodyne_points", 2, lidar_callback);
@@ -66,6 +67,8 @@ void contentCheck() {}
 
 void hardwareCheck() {
     _ok = true;
+    if (false_sensor) return;
+
     // usb connection
     int serial_port = open("/dev/ttyUSB0", O_RDWR);
 

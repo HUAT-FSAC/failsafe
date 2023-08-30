@@ -53,7 +53,8 @@ std::string lidar_eth;
 int _num = 0;
 
 bool keep_running;
-bool accept_only;
+bool accept_only = false;
+bool false_sensor = false;
 bool runtime_init_flag = false;
 bool _ok = true;
 #endif
