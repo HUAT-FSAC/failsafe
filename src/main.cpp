@@ -1,4 +1,6 @@
 #include "main.hpp"
+#include "ros/console.h"
+#include "ros/console_backend.h"
 #include <string>
 
 void init(ros::NodeHandle nh) {
@@ -7,6 +9,7 @@ void init(ros::NodeHandle nh) {
     ros::param::get("/failsafe/lidar_eth_interface", lidar_eth);
     ros::param::get("/failsafe/accept_only", accept_only);
     ros::param::get("/failsafe/false_sensor", false_sensor);
+    ros::param::get("/failsafe/debug_msgs_show", debug_show);
 
     cam_sub = nh.subscribe("/pylon_camera_node/image_raw", 1, cam_callback);
     lidar_sub = nh.subscribe("/velodyne_points", 2, lidar_callback);
@@ -25,6 +28,10 @@ void init(ros::NodeHandle nh) {
     cmd.gear_position = 0;
     cmd.working_mode = 1;
     cmd.racing_num = 1;
+
+    if (debug_show) {
+        ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
+    }
 }
 
 void alert(int type) {
