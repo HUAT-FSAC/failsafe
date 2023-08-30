@@ -3,6 +3,6 @@ lidar_eth_interface: enp2s0f1
 # available interfaces are: enp2s0f0,enp2s0f1,enp2s0f2,enp2s0f3,enp4s0,enp0s31f6
 
 # debug options
-debug_msgs_show: true
+debug_msgs_show: false
 accept_only: false
-false_sensor: true
+false_sensor: false

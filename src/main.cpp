@@ -15,7 +15,8 @@ void init(ros::NodeHandle nh) {
     lidar_sub = nh.subscribe("/velodyne_points", 2, lidar_callback);
     imu_sub = nh.subscribe("/INS/ASENSING", 1, imu_callback);
 
-    control_pub = nh.advertise<common_msgs::vehicle_cmd>("/vehcileCMDMsg", 1); // wasn't my fault, just keep it.
+    control_pub = nh.advertise<common_msgs::vehicle_cmd>(
+        "/vehcileCMDMsg", 1); // wasn't my fault, just keep it.
 
     // init predefined value for vehicle cmd
     // values here are refered from pure_pursuit/PP_car
@@ -30,7 +31,8 @@ void init(ros::NodeHandle nh) {
     cmd.racing_num = 1;
 
     if (debug_show) {
-        ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
+        ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
+                                       ros::console::levels::Debug);
     }
 }
 
@@ -74,7 +76,8 @@ void contentCheck() {}
 
 void hardwareCheck() {
     _ok = true;
-    if (false_sensor) return;
+    if (false_sensor)
+        return;
 
     // usb connection
     int serial_port = open("/dev/ttyUSB0", O_RDWR);
@@ -90,7 +93,6 @@ void hardwareCheck() {
     try {
         // lidar
         file.open("/sys/class/net/" + lidar_eth + "/operstate");
-        ROS_INFO_STREAM("lidar: " + lidar_eth);
         file >> buffer;
         if (buffer != "up") {
             ROS_ERROR("Lidar Failure");
@@ -102,7 +104,6 @@ void hardwareCheck() {
 
         // camera
         file.open("/sys/class/net/" + cam_eth + "/operstate");
-        ROS_INFO_STREAM("cam: " + cam_eth);
         file >> buffer;
         if (buffer != "up") {
             ROS_ERROR("Camera Failure");
@@ -130,12 +131,12 @@ void checkRuntime() {
 
     while (ros::ok()) {
         if (accept_only) {
-            ROS_WARN("Only sending check passed msgs!");
+            ROS_DEBUG("Only sending check passed msgs!");
             ROS_INFO_STREAM("Checking.." + std::to_string(_num));
             alert(FAILURE_NO);
             _num++;
         } else {
-            ROS_DEBUG("Checking begin..");
+            ROS_DEBUG_STREAM("Checking begin.., false_sensor: " + std::to_string(false_sensor));
             hardwareCheck();
 
             // runtime initial check
@@ -143,14 +144,13 @@ void checkRuntime() {
                 if (_ok) {
                     if (_num < 40) {
                         alert(FAILURE_NO); // vehicle initial check successed
-                        ROS_DEBUG_STREAM("pre-initial check successed, current num: " +
-                                  std::to_string(_num));
+                        ROS_INFO_STREAM(
+                            "pre-initial check successed, current num: " +
+                            std::to_string(_num));
                         _num++;
                     } else {
                         runtime_init_flag = true;
-                        ROS_INFO("AS Sensor initial self-check Successed, "
-                                 "final check started...");
-                        alert(FAILURE_NO); // last time sent
+                        ROS_INFO("AS Sensor initial self-check Successed");
                     }
                 } else {
                     ROS_INFO("Initial Check Failed, resetting internal check "
