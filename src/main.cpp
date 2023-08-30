@@ -1,8 +1,4 @@
 #include "main.hpp"
-#include "ros/init.h"
-#include "ros/param.h"
-#include "ros/rate.h"
-#include <unistd.h>
 
 void init(ros::NodeHandle nh) {
 
@@ -19,7 +15,7 @@ void init(ros::NodeHandle nh) {
     imu_sub = nh.subscribe("/INS/ASENSING", 1, imu_callback);
 
     control_pub =
-        nh.advertise<common_msgs::vehicle_cmd>("/failsafe_control", 1);
+        nh.advertise<common_msgs::vehicle_cmd>("/vehicleCMDMsg", 1);
 
     // init predefined value for vehicle cmd
     // values here are refered from pure_pursuit/PP_car
