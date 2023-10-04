@@ -1,7 +1,4 @@
 #include "main.hpp"
-#include "ros/console.h"
-#include "ros/console_backend.h"
-#include <string>
 
 void init(ros::NodeHandle nh) {
     ros::param::get("keep_running", keep_running);
