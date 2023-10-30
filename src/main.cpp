@@ -62,6 +62,7 @@ void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &cloud_ptr) {
 void imu_callback(const common_msgs::HUAT_ASENSING::ConstPtr &msg) {
     // TODO check if the msg is corrupted
     _pos.ins_status = msg->ins_status;
+    ROS_INFO_STREAM("INS STATUS:" << _pos.ins_status);
 }
 
 // sensor_msgs/Image
@@ -69,21 +70,24 @@ void cam_callback(const sensor_msgs::Image::ConstPtr &msg) {
     _image.data = msg->data;
 }
 
-void contentCheck() {}
+void contentCheck() {
+    // IMU
+    // if (_pos.ins_status )
+}
 
 void hardwareCheck() {
     _ok = true;
     if (false_sensor)
         return;
 
-    // usb connection
-    int serial_port = open("/dev/ttyUSB0", O_RDWR);
+    // usb physical connection
+    int _imu = access("/dev/ttyUSB0", F_OK);
 
-    if (serial_port < 0) {
+    if (_imu == 0) {
+        ROS_DEBUG("IMU Physically Connected");
+    } else {
         ROS_ERROR("IMU Failure");
         alert(FAILURE_IMU);
-    } else {
-        ROS_DEBUG("IMU Connected");
     }
 
     // ethnernet connection

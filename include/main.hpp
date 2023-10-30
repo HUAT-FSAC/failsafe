@@ -9,7 +9,7 @@
 #include "sensor_msgs/Image.h"
 #include "sensor_msgs/PointCloud2.h"
 
-#include <fcntl.h> // Contains file controls like O_RDWR
+#include <unistd.h>
 #include <fstream>
 // control msg
 
