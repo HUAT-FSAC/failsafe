@@ -145,7 +145,7 @@ void Failsafe::runtime_thread(void) {
       Failsafe::initial_check_done = true;
       ROS_INFO("Initial check finished!");
     } else if (!_result && !Failsafe::initial_check_done) {
-      ROS_WARN("Initial check DNF, Retrying...");
+      ROS_WARN_THROTTLE(0.8, "Initial check DNF, Retrying...");
     }
   }
   return;

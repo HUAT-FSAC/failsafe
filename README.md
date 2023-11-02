@@ -1,48 +1,19 @@
-# failsafe
+# failsafe-class
+
+基于原 failsafe 整合的单文件 failsafe 类版本。
+
+## 使用
+
+通过实例化 Failsafe 对象并调用 `check()` 或者创建新线程运行 `runtime_thread()`来检测。同时使用 topic 实时更新 `imu_status`。  
+然后查看实例化对象成员变量 `Failsafe::ok` 的值即可。
 
 ## 原理
 
-实时检测各传感器的信息的发送情况，并在无响应/无效响应时控制车辆行为。
-
-## 启动
-
-由于现行的设计模式为：工控机接受来自 VCU 的 `common_msgs/vehicle_status/racing_num=2`（暂定为2） 的信号后，failsafe 开始启动（由 `start.sh` 提供）。在确认各传感器物理连接后发送 `common_msgs/vehicle_cmd/racing_status=1` 来示意 VCU 车辆可以启动，若在运行时出现问题就发送 `common_msgs/vehicle_cmd/racing_status=3` 以启动紧急制动。
-
-因此在启动时应直接使用
-
-```bash
-roslaunch failsafe runtime_check.launch
-```
-
-直接启动运行时检测模式。
-
-## 行为
-
-如果各传感器物理连接稳定，则发送
-
-```plain
-rostopic echo vehcileCMDMsg
-
-head1: 170
-head2: 85
-length: 10
-steering: 0
-brake_force: 0
-pedal_ratio: 0
-gear_position: 0
-working_mode: 1
-racing_num: 1
-racing_status: 1
-checksum: 3
-```
-如果在完成 `sensor initial check` 后出现传感器掉线情况，failsafe 将会发送 `racing_status = 3` 的 msg，其余部分与上面部分相同。（checksum 除外）  
-而如果在没有完成的情况下， `_num` 变量将会重置，从而重新进行 `sensor initial check`。
-
+实时检测各传感器的信息的发送情况，并在无响应/无效响应做出相应反应。
 
 ## 实现
 
 failsafe 的实现基于硬件连接检测和话题内容检测（软件）。
-并通过 ROS Topic 向 VCU 发送控制信号。
 
 ### 硬件连接
 
@@ -61,7 +32,3 @@ failsafe 的实现基于硬件连接检测和话题内容检测（软件）。
 目前已经实现：
 
 - 针对 IMU 的基于 topic 的状态检测
-
-## 注意
-
-~~由于IPC -> VCU 的消息传递（vehicle_cmd.msg）没有设计来自于无人系统的故障信息，故采用 “8字环绕” 的模式作为无人系统故障信号。~~
