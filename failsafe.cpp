@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/thread/thread.hpp>
+#include <chrono>
 #include <fcntl.h>
 #include <fstream>
 #include <string>
@@ -20,6 +21,7 @@ public:
   // bool run_for(double time); // not implemented
   void runtime_thread();
   void stop_runtime(void);
+  bool is_time_lapse_init = false;
 
 private:
   const int IMU_RETRY_TIMES = 15;
@@ -32,6 +34,9 @@ private:
   bool check_camera_conn(void);
   bool check_usb_connection(void);
   bool check_imu_topic(void);
+  std::chrono::time_point<std::chrono::steady_clock> cstartTime = std::chrono::steady_clock::now();
+  std::chrono::time_point<std::chrono::steady_clock> cendTime = std::chrono::steady_clock::now();
+  std::chrono::time_point<std::chrono::steady_clock> checkTime = std::chrono::steady_clock::now();
 };
 
 bool Failsafe::check_lidar_conn(void) {
@@ -141,11 +146,44 @@ void Failsafe::runtime_thread(void) {
     // this delay is the best when compatible with topic update speed
 
     bool _result = Failsafe::check();
-    if (_result && !Failsafe::initial_check_done) {
-      Failsafe::initial_check_done = true;
-      ROS_INFO("Initial check finished!");
-    } else if (!_result && !Failsafe::initial_check_done) {
-      ROS_WARN_THROTTLE(0.8, "Initial check DNF, Retrying...");
+
+    if (_result) {
+      if (!Failsafe::initial_check_done) {
+        if (!Failsafe::is_time_lapse_init) {
+          ROS_WARN("Time lapse check init!!!");
+          // start time lapse check for initial
+          is_time_lapse_init = true;
+          cstartTime = std::chrono::steady_clock::now();
+        } else if (Failsafe::is_time_lapse_init) {
+          cendTime = std::chrono::steady_clock::now();
+					int64_t _checkTime = ((std::chrono::duration_cast<std::chrono::milliseconds>(cendTime - cstartTime)).count()) / 1000;
+
+          if(_checkTime >= 5) {
+            ROS_INFO("Finihsed on Initial Check");
+            Failsafe::initial_check_done = true;
+            Failsafe::is_time_lapse_init = false;
+            // v_cmd.racing_status = 1;
+            // failsafe don't control cmd anymore
+            Failsafe::ok = true;
+          } else {
+            ROS_INFO_THROTTLE(0.5, "Check ok, Time lapsing...");
+          }
+        }
+      } else {
+        // initial check is done
+      }
+    } else {
+      // when sensor failure occurs
+      if (Failsafe::is_time_lapse_init) {
+        ROS_WARN("Time lapse Check failed, time lapse will be restarted");
+        is_time_lapse_init = false;
+      }
+
+      if (Failsafe::initial_check_done) {
+        ROS_ERROR_THROTTLE(0.2, "Runtime Check Failed");
+        // v_cmd.racing_status = 3;
+        Failsafe::ok = false;
+      }
     }
   }
   return;
